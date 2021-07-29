@@ -1,0 +1,87 @@
+// Copyright 2015 gRPC authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/*
+protoc -I=. --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative mq.proto
+*/
+
+syntax = "proto3";
+
+option go_package = "github.com/linhoi/mq/protobuf/mq";
+option java_multiple_files = true;
+option java_package = "com.github.linhoi.mq";
+option java_outer_classname = "MQProto";
+
+package mq;
+
+// ProducerAPI.
+service ProducerAPI {
+    // SendMessage.
+    rpc SendMessage(SendMessageRequest) returns (SendMessageResponse);
+}
+
+message SendMessageRequest {
+    Message message = 1;
+}
+
+// ConsumerAPI.
+service ConsumerAPI {
+    // RecvMessage.
+    rpc RecvMessage(RecvMessageRequest) returns (RecvMessageResponse);
+}
+
+message RecvMessageRequest {
+    Message message = 1;
+}
+
+message RecvMessageResponse {}
+
+message SendMessageResponse {
+    SendResult send_result = 1;
+}
+
+// Message 消息. 一条消息由主题, 消息体以及可选的消息标签, 自定义附属键值对构成..
+message Message {
+    // 消息主题, 最长不超过255个字符; 由a-z, A-Z, 0-9, 以及中划线"-"和下划线"_"构成..
+    string topic = 1;
+    // 消息标签, 请使用合法标识符, 尽量简短且见名知意.
+    string tag = 2;
+    // 业务主键.
+    string key = 3;
+    // 顺序消息选择因子，发送方法基于shardingKey选择具体的消息队列.
+    string sharding_key = 4;
+    // 添加用户自定义属性键值对; 该键值对在消费消费时可被获取.
+    map<string, string> properties = 5;
+    // 消息体, 消息体长度默认不超过4M, 具体请参阅集群部署文档描述.
+    string body = 6;
+    // 已发送消息的ID，发送消息时，不需要赋值.
+    string msg_id = 7;
+    // 生产host，发送消息时，不需要赋值.
+    string born_host = 8;
+    // 生产时间戳，发送消息时，不需要赋值.
+    string born_ts = 9;
+    // 延迟发送时间秒,如果设置为60，意为60秒后consumer可以收到此条消息.
+    int64 deliver_seconds = 10;
+    // 延迟发送时间，如果设置为'2020-01-10 11:11:11',.
+    string deliver_time = 11;
+    // instance 客户端send可选接入点.
+    string instance = 12;
+}
+
+// SendResult 发送结果.
+message SendResult {
+    // 消息ID.
+    string message_id = 1;
+}
+
